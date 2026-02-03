@@ -5,3 +5,5 @@ pub mod db;
 pub mod migrate;
 pub mod parser;
 pub mod schema;
+#[cfg(feature = "wasm")]
+pub mod wasm;

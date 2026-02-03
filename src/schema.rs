@@ -5,12 +5,16 @@ use std::collections::HashMap;
 pub struct Schema {
     pub version: Option<String>,
     pub dialect: Option<String>,
+    #[serde(default)]
+    pub comment: Option<String>,
     pub tables: HashMap<String, Table>,
     pub enums: Option<HashMap<String, Vec<String>>>,
 }
 
 #[derive(Debug, Clone, Deserialize, Default)]
 pub struct Table {
+    #[serde(default)]
+    pub comment: Option<String>,
     pub columns: HashMap<String, Column>,
     pub indexes: Option<Vec<Index>>,
     pub constraints: Option<Vec<TableConstraint>>,

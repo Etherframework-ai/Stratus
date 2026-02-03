@@ -1,12 +1,15 @@
 # Stratus - TypeSQL 编译器
 
 <div align="center">
+  <img src="logo/stratus-logo.svg" alt="Stratus Logo" width="200"/>
 
-[![Rust版本](https://img.shields.io/badge/Rust-1.70+-blue.svg)](https://www.rust-lang.org/)
-[![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
-[![版本](https://img.shields.io/badge/版本-0.1.0-orange.svg)](Cargo.toml)
+  # Stratus - TypeSQL 编译器
 
-**一个用 Rust 编写的编译时 SQL 类型生成器，为 TypeScript 和 Python 生成类型安全的代码。**
+  [![Rust版本](https://img.shields.io/badge/Rust-1.70+-blue.svg)](https://www.rust-lang.org/)
+  [![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
+  [![版本](https://img.shields.io/badge/版本-0.1.0-orange.svg)](Cargo.toml)
+
+  **一个用 Rust 编写的编译时 SQL 类型生成器，为 TypeScript 和 Python 生成类型安全的代码。**
 
 </div>
 
@@ -1264,6 +1267,8 @@ stratus/
 ├── Cargo.toml              # Rust 项目配置
 ├── README.md               # 英文文档
 ├── README_CN.md            # 本文档
+├── logo/                   # Logo 资源
+│   └── stratus-logo.svg    # 项目 Logo
 ├── docker-compose.test.yml # 测试用 PostgreSQL 容器配置
 ├── examples/               # 示例文件
 │   ├── schema_postgres.json
@@ -1276,7 +1281,7 @@ stratus/
 │   ├── sqlite.json
 │   └── schema.json
 ├── sdk/                    # 语言 SDK
-│   ├── ts/                 # TypeScript SDK
+│   ├── ts/                 # TypeScript SDK (@stratusdb/sdk)
 │   │   ├── package.json
 │   │   └── src/
 │   │       ├── index.ts
@@ -1285,7 +1290,16 @@ stratus/
 │   │       ├── executor.ts
 │   │       ├── params.ts
 │   │       └── transaction.ts
-│   └── py/                 # Python SDK
+│   ├── pg/                 # pg SDK (@stratusdb/pg)
+│   │   ├── package.json
+│   │   ├── tsconfig.json
+│   │   └── src/
+│   │       └── index.ts
+│   ├── wasm/               # WASM 解析器 (@stratusdb/wasm)
+│   │   ├── package.json
+│   │   ├── README.md
+│   │   └── test.mjs
+│   └── py/                 # Python SDK (stratus-db)
 │       ├── pyproject.toml
 │       └── stratus/
 │           ├── __init__.py
@@ -1300,18 +1314,20 @@ stratus/
 │       ├── down.sql
 │       └── meta.json
 ├── src/                    # 源代码
-│   ├── main.rs             # CLI 入口
-│   ├── lib.rs              # 库入口
-│   ├── ast.rs              # AST 定义
-│   ├── parser.rs           # TypeSQL 解析器
+│   ├── main.rs            # CLI 入口
+│   ├── lib.rs             # 库入口
+│   ├── ast.rs             # AST 定义
+│   ├── parser.rs          # TypeSQL 解析器 (Rust)
 │   ├── schema.rs           # JSON Schema 结构
-│   ├── db.rs               # 数据库操作模块
-│   ├── migrate.rs          # 迁移管理模块
-│   └── codegen/            # 代码生成器
-│       ├── mod.rs
-│       ├── ts.rs           # TypeScript 生成
-│       ├── py.rs           # Python 生成
-│       └── sql.rs          # SQL 生成
+│   ├── db.rs              # 数据库操作模块
+│   ├── migrate.rs         # 迁移管理模块
+│   ├── config.rs          # 配置模块
+│   ├── codegen/           # 代码生成器
+│   │   ├── mod.rs
+│   │   ├── ts.rs          # TypeScript 生成
+│   │   ├── py.rs          # Python 生成
+│   │   └── sql.rs         # SQL 生成
+│   └── wasm.rs            # WASM 接口
 └── target/                 # 编译输出
 ```
 
@@ -1663,13 +1679,87 @@ migrations/
 
 ### Q5: Stratus 有现成的 SDK 吗？
 
-是的！Stratus 提供官方的 TypeScript 和 Python SDK：
+是的！Stratus 提供官方的 TypeScript、Python SDK 以及高性能 pg SDK：
 
-**TypeScript SDK**：
+**TypeScript SDK** (`@stratusdb/sdk`)：
 
 ```bash
-cd sdk/ts
-npm install
+cd sdk/ts && npm install
+```
+
+```typescript
+import { StratusPool, query } from '@stratusdb/sdk';
+
+// 创建连接池
+const pool = new StratusPool({
+  connectionString: process.env.DATABASE_URL,
+});
+
+// 执行类型安全查询
+const users = await pool.query('SELECT * FROM users WHERE id = $1', [1]);
+console.log(users[0].email); // 类型安全！
+```
+
+**pg SDK** (`@stratusdb/pg`) - 高性能运行时，支持 WASM 解析器：
+
+```bash
+cd sdk/pg && npm install
+```
+
+```typescript
+import { Pool } from 'pg';
+import { TypeSQLExecutor } from '@stratusdb/pg';
+
+// 可选：加载 WASM 解析器，解析速度提升 10 倍
+import('@stratusdb/wasm').then(wasm => {
+  wasm.init();
+  globalThis.stratus = { parseTypesql: wasm.parse_typesql };
+});
+
+const executor = new TypeSQLExecutor();
+
+const user = await executor.query(pool)`
+  # name: GetUser :one id: number
+  SELECT * FROM users WHERE id = ${1}
+`({ id: 1 });
+```
+
+**WASM 解析器** (`@stratusdb/wasm`) - 独立高性能解析器：
+
+```bash
+cd sdk/wasm && npm install
+```
+
+```typescript
+import init, { parse_typesql, validate_typesql } from '@stratusdb/wasm';
+
+await init();
+
+const result = parse_typesql(`
+# name: GetUser :one id: number
+SELECT * FROM users WHERE id = $1;
+`);
+
+console.log(JSON.parse(result.val));
+```
+
+**Python SDK**：
+
+```bash
+pip install stratus-db
+```
+
+```python
+from stratus import StratusPool, query
+
+async def main():
+    pool = StratusPool("postgresql://user:pass@localhost/db")
+    
+    # 执行类型安全查询
+    users = await pool.query("SELECT * FROM users WHERE id = $1", [1])
+    print(users[0].email)  # 类型检查！
+
+asyncio.run(main())
 ```
 
 ```typescript

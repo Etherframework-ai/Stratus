@@ -1,12 +1,15 @@
 # Stratus - TypeSQL Compiler
 
 <div align="center">
+  <img src="logo/stratus-logo.svg" alt="Stratus Logo" width="200"/>
 
-[![Rust Version](https://img.shields.io/badge/Rust-1.70+-blue.svg)](https://www.rust-lang.org/)
-[![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
-[![Version](https://img.shields.io/badge/Version-0.1.0-orange.svg)](Cargo.toml)
+  # Stratus - TypeSQL Compiler
 
-**A compile-time SQL type generator written in Rust that generates type-safe code for TypeScript and Python.**
+  [![Rust Version](https://img.shields.io/badge/Rust-1.70+-blue.svg)](https://www.rust-lang.org/)
+  [![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
+  [![Version](https://img.shields.io/badge/Version-0.1.0-orange.svg)](Cargo.toml)
+
+  **A compile-time SQL type generator written in Rust that generates type-safe code for TypeScript and Python.**
 
 </div>
 
@@ -636,25 +639,30 @@ stratus db pull --output schema.json --url "postgresql://..."
 ```
 stratus/
 ├── Cargo.toml              # Rust project config
-├── README.md               # English documentation
-├── README_CN.md            # Chinese documentation
+├── README.md              # English documentation
+├── README_CN.md           # Chinese documentation
+├── logo/                  # Logo assets
+│   └── stratus-logo.svg   # Project logo
 ├── docker-compose.test.yml # Test PostgreSQL container
-├── examples/               # Example files
-├── schema/                 # Schema templates
-├── sdk/                    # Language SDKs
-│   ├── ts/                 # TypeScript SDK
-│   └── py/                 # Python SDK
-├── src/                    # Source code
-│   ├── main.rs             # CLI entry
-│   ├── lib.rs              # Library entry
-│   ├── ast.rs              # AST definitions
-│   ├── parser.rs           # TypeSQL parser
-│   ├── schema.rs           # JSON Schema structures
-│   ├── db.rs               # Database operations
-│   ├── migrate.rs          # Migration management
-│   ├── config.rs           # Configuration module
-│   └── codegen/            # Code generators
-└── target/                 # Build output
+├── examples/              # Example files
+├── schema/                # Schema templates
+├── sdk/                   # Language SDKs
+│   ├── ts/                # TypeScript SDK (@stratusdb/sdk)
+│   ├── py/                # Python SDK (stratus-db)
+│   ├── pg/                # pg SDK (@stratusdb/pg)
+│   └── wasm/              # WASM Parser (@stratusdb/wasm)
+├── src/                   # Source code
+│   ├── main.rs            # CLI entry
+│   ├── lib.rs             # Library entry
+│   ├── ast.rs             # AST definitions
+│   ├── parser.rs          # TypeSQL parser (Rust)
+│   ├── schema.rs          # JSON Schema structures
+│   ├── db.rs              # Database operations
+│   ├── migrate.rs         # Migration management
+│   ├── config.rs          # Configuration module
+│   ├── codegen/           # Code generators
+│   └── wasm.rs            # WASM interface
+└── target/                # Build output
 ```
 
 ---
@@ -756,7 +764,7 @@ stratus migrate reset --schema schema.json --force
 
 ### Q4: What SDKs are available?
 
-**TypeScript SDK**:
+**TypeScript SDK** (`@stratusdb/sdk`):
 
 ```bash
 cd sdk/ts && npm install
@@ -770,6 +778,49 @@ const pool = new StratusPool({
 });
 
 const users = await pool.query('SELECT * FROM users WHERE id = $1', [1]);
+```
+
+**pg SDK** (`@stratusdb/pg`) - High-performance runtime with WASM parser:
+
+```bash
+cd sdk/pg && npm install
+```
+
+```typescript
+import { Pool } from 'pg';
+import { TypeSQLExecutor } from '@stratusdb/pg';
+
+// Optional: Load WASM parser for 10x faster parsing
+import('@stratusdb/wasm').then(wasm => {
+  wasm.init();
+  globalThis.stratus = { parseTypesql: wasm.parse_typesql };
+});
+
+const executor = new TypeSQLExecutor();
+
+const user = await executor.query(pool)`
+  # name: GetUser :one id: number
+  SELECT * FROM users WHERE id = ${1}
+`({ id: 1 });
+```
+
+**WASM Parser** (`@stratusdb/wasm`) - Standalone high-performance parser:
+
+```bash
+cd sdk/wasm && npm install
+```
+
+```typescript
+import init, { parse_typesql, validate_typesql } from '@stratusdb/wasm';
+
+await init();
+
+const result = parse_typesql(`
+# name: GetUser :one id: number
+SELECT * FROM users WHERE id = $1;
+`);
+
+console.log(JSON.parse(result.val));
 ```
 
 **Python SDK**:

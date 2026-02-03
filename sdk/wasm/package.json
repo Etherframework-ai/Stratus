@@ -1,0 +1,28 @@
+{
+  "name": "@stratusdb/wasm",
+  "version": "0.1.0",
+  "description": "Stratus TypeSQL Parser compiled to WebAssembly",
+  "main": "pkg/stratus.js",
+  "types": "pkg/stratus.d.ts",
+  "files": [
+    "pkg/"
+  ],
+  "scripts": {
+    "build": "wasm-pack build --target web ../..",
+    "build:node": "wasm-pack build --target nodejs ../..",
+    "test": "node test.mjs"
+  },
+  "keywords": [
+    "stratus",
+    "typesql",
+    "wasm",
+    "parser",
+    "postgresql"
+  ],
+  "author": "",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/yourusername/stratus.git"
+  }
+}

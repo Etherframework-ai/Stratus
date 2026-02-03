@@ -605,6 +605,7 @@ impl DbSchema {
             tables.insert(
                 table_name.clone(),
                 crate::schema::Table {
+                    comment: None,
                     columns,
                     indexes: None,
                     constraints: None,
@@ -618,6 +619,7 @@ impl DbSchema {
         crate::schema::Schema {
             version: Some("1".to_string()),
             dialect: Some(self.dialect.clone()),
+            comment: None,
             tables,
             enums: Some(self.enums.clone()),
         }
