@@ -1,0 +1,251 @@
+{
+  "version": "1",
+  "dialect": "mysql",
+  "tables": {
+    "users": {
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "int",
+          "unsigned": true,
+          "autoIncrement": true,
+          "isPrimaryKey": true
+        },
+        "email": {
+          "name": "email",
+          "type": "varchar",
+          "size": 255,
+          "isNotNull": true,
+          "isUnique": true,
+          "collation": "utf8mb4_unicode_ci"
+        },
+        "username": {
+          "name": "username",
+          "type": "varchar",
+          "size": 50,
+          "isNotNull": true,
+          "isUnique": true
+        },
+        "password_hash": {
+          "name": "password_hash",
+          "type": "varchar",
+          "size": 255,
+          "isNotNull": true
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp",
+          "default": "CURRENT_TIMESTAMP",
+          "isNotNull": true
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp",
+          "default": "CURRENT_TIMESTAMP",
+          "onUpdate": "CURRENT_TIMESTAMP",
+          "isNotNull": true
+        },
+        "bio": {
+          "name": "bio",
+          "type": "text"
+        },
+        "settings": {
+          "name": "settings",
+          "type": "json"
+        }
+      },
+      "indexes": [
+        {
+          "name": "idx_users_email",
+          "columns": ["email"],
+          "unique": true,
+          "indexType": "btree"
+        },
+        {
+          "name": "idx_users_username",
+          "columns": ["username"],
+          "unique": true
+        }
+      ],
+      "constraints": [
+        {
+          "name": "chk_username_length",
+          "constraintType": "check",
+          "columns": ["username"],
+          "expression": "LENGTH(username) >= 3"
+        }
+      ]
+    },
+    "posts": {
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "int",
+          "unsigned": true,
+          "autoIncrement": true,
+          "isPrimaryKey": true
+        },
+        "user_id": {
+          "name": "user_id",
+          "type": "int",
+          "unsigned": true,
+          "isNotNull": true
+        },
+        "title": {
+          "name": "title",
+          "type": "varchar",
+          "size": 500,
+          "isNotNull": true
+        },
+        "slug": {
+          "name": "slug",
+          "type": "varchar",
+          "size": 510,
+          "isNotNull": true
+        },
+        "content": {
+          "name": "content",
+          "type": "longtext"
+        },
+        "excerpt": {
+          "name": "excerpt",
+          "type": "text"
+        },
+        "status": {
+          "name": "status",
+          "type": "enum",
+          "values": ["draft", "published", "archived"]
+        },
+        "view_count": {
+          "name": "view_count",
+          "type": "int",
+          "unsigned": true,
+          "default": "0"
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp",
+          "default": "CURRENT_TIMESTAMP",
+          "isNotNull": true
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp",
+          "default": "CURRENT_TIMESTAMP",
+          "onUpdate": "CURRENT_TIMESTAMP",
+          "isNotNull": true
+        }
+      },
+      "indexes": [
+        {
+          "name": "idx_posts_user_id",
+          "columns": ["user_id"],
+          "indexType": "btree"
+        },
+        {
+          "name": "idx_posts_status",
+          "columns": ["status"]
+        },
+        {
+          "name": "idx_posts_slug",
+          "columns": ["slug"],
+          "unique": true
+        },
+        {
+          "name": "idx_posts_created_at",
+          "columns": ["created_at"]
+        }
+      ],
+      "constraints": [
+        {
+          "name": "fk_posts_user",
+          "constraintType": "foreign key",
+          "columns": ["user_id"],
+          "references": {
+            "table": "users",
+            "column": "id",
+            "onDelete": "cascade"
+          }
+        }
+      ]
+    },
+    "comments": {
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "int",
+          "unsigned": true,
+          "autoIncrement": true,
+          "isPrimaryKey": true
+        },
+        "post_id": {
+          "name": "post_id",
+          "type": "int",
+          "unsigned": true,
+          "isNotNull": true
+        },
+        "user_id": {
+          "name": "user_id",
+          "type": "int",
+          "unsigned": true,
+          "isNotNull": true
+        },
+        "parent_id": {
+          "name": "parent_id",
+          "type": "int",
+          "unsigned": true
+        },
+        "content": {
+          "name": "content",
+          "type": "text",
+          "isNotNull": true
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp",
+          "default": "CURRENT_TIMESTAMP",
+          "isNotNull": true
+        }
+      },
+      "indexes": [
+        {
+          "name": "idx_comments_post_id",
+          "columns": ["post_id"]
+        },
+        {
+          "name": "idx_comments_user_id",
+          "columns": ["user_id"]
+        },
+        {
+          "name": "idx_comments_parent_id",
+          "columns": ["parent_id"]
+        }
+      ],
+      "constraints": [
+        {
+          "name": "fk_comments_post",
+          "constraintType": "foreign key",
+          "columns": ["post_id"],
+          "references": {
+            "table": "posts",
+            "column": "id",
+            "onDelete": "cascade"
+          }
+        },
+        {
+          "name": "fk_comments_user",
+          "constraintType": "foreign key",
+          "columns": ["user_id"],
+          "references": {
+            "table": "users",
+            "column": "id",
+            "onDelete": "cascade"
+          }
+        }
+      ]
+    }
+  },
+  "enums": {
+    "post_status": ["draft", "published", "archived"]
+  }
+}

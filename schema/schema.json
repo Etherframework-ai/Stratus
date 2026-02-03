@@ -1,0 +1,47 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://stratus.dev/schema.json",
+  "title": "Stratus Multi-Database Schema Registry",
+  "description": "Registry pointing to database-specific Stratus schema definitions",
+  "type": "object",
+  "properties": {
+    "$schema": {
+      "type": "string",
+      "const": "https://stratus.dev/schema.json"
+    }
+  },
+  "allOf": [
+    {
+      "title": "PostgreSQL",
+      "description": "Use schema/postgresql.json for PostgreSQL schemas",
+      "not": {
+        "required": ["dialect"]
+      }
+    },
+    {
+      "title": "MySQL",
+      "description": "Use schema/mysql.json for MySQL schemas",
+      "not": {
+        "required": ["dialect"]
+      }
+    },
+    {
+      "title": "SQLite",
+      "description": "Use schema/sqlite.json for SQLite schemas",
+      "not": {
+        "required": ["dialect"]
+      }
+    }
+  ],
+  "definitions": {
+    "postgresql": {
+      "$ref": "postgresql.json"
+    },
+    "mysql": {
+      "$ref": "mysql.json"
+    },
+    "sqlite": {
+      "$ref": "sqlite.json"
+    }
+  }
+}

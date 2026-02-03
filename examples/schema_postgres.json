@@ -1,0 +1,243 @@
+{
+  "version": "1",
+  "dialect": "postgresql",
+  "tables": {
+    "users": {
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "bigint",
+          "isPrimaryKey": true,
+          "isNotNull": true,
+          "identity": { "always": true }
+        },
+        "email": {
+          "name": "email",
+          "type": "varchar",
+          "size": 255,
+          "isNotNull": true,
+          "isUnique": true,
+          "collation": "en_US.utf8"
+        },
+        "username": {
+          "name": "username",
+          "type": "varchar",
+          "size": 50,
+          "isNotNull": true,
+          "isUnique": true
+        },
+        "password_hash": {
+          "name": "password_hash",
+          "type": "varchar",
+          "size": 255,
+          "isNotNull": true
+        },
+        "uuid": {
+          "name": "uuid",
+          "type": "uuid",
+          "default": "gen_random_uuid()"
+        },
+        "tags": {
+          "name": "tags",
+          "type": "text",
+          "arrayDimensions": 1
+        },
+        "settings": {
+          "name": "settings",
+          "type": "jsonb"
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamptz",
+          "isNotNull": true,
+          "default": "now()"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamptz",
+          "isNotNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": [
+        {
+          "name": "idx_users_email",
+          "columns": ["email"],
+          "unique": true,
+          "method": "btree",
+          "with": { "fillfactor": 90 }
+        },
+        {
+          "name": "idx_users_tags_gin",
+          "columns": ["tags"],
+          "method": "gin",
+          "where": "tags IS NOT NULL"
+        }
+      ],
+      "constraints": [
+        {
+          "name": "chk_users_email_format",
+          "constraintType": "check",
+          "columns": ["email"],
+          "expression": "email ~ '^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\\\.[a-zA-Z]{2,}$'"
+        },
+        {
+          "name": "chk_users_username_length",
+          "constraintType": "check",
+          "columns": ["username"],
+          "expression": "length(username) >= 3"
+        }
+      ],
+      "options": {
+        "fillfactor": 85
+      }
+    },
+    "orders": {
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "bigint",
+          "isPrimaryKey": true,
+          "isNotNull": true,
+          "identity": { "always": true }
+        },
+        "user_id": {
+          "name": "user_id",
+          "type": "bigint",
+          "isNotNull": true
+        },
+        "order_number": {
+          "name": "order_number",
+          "type": "varchar",
+          "size": 50,
+          "isNotNull": true,
+          "isUnique": true
+        },
+        "status": {
+          "name": "status",
+          "type": "varchar",
+          "size": 50,
+          "isNotNull": true,
+          "default": "'pending'"
+        },
+        "total_amount": {
+          "name": "total_amount",
+          "type": "decimal",
+          "size": 10,
+          "scale": 2
+        },
+        "shipping_address": {
+          "name": "shipping_address",
+          "type": "jsonb"
+        },
+        "metadata": {
+          "name": "metadata",
+          "type": "jsonb"
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamptz",
+          "isNotNull": true,
+          "default": "now()"
+        },
+        "shipped_at": {
+          "name": "shipped_at",
+          "type": "timestamptz"
+        }
+      },
+      "indexes": [
+        {
+          "name": "idx_orders_user_id",
+          "columns": ["user_id"],
+          "method": "btree"
+        },
+        {
+          "name": "idx_orders_created_at",
+          "columns": ["created_at"],
+          "method": "btree"
+        }
+      ],
+      "constraints": [
+        {
+          "name": "fk_orders_user",
+          "constraintType": "foreign key",
+          "columns": ["user_id"],
+          "references": {
+            "table": "users",
+            "column": "id",
+            "onDelete": "cascade"
+          }
+        },
+        {
+          "name": "chk_total_amount_positive",
+          "constraintType": "check",
+          "expression": "total_amount > 0"
+        }
+      ]
+    },
+    "order_items": {
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "bigint",
+          "isPrimaryKey": true,
+          "isNotNull": true,
+          "identity": { "always": true }
+        },
+        "order_id": {
+          "name": "order_id",
+          "type": "bigint",
+          "isNotNull": true
+        },
+        "product_id": {
+          "name": "product_id",
+          "type": "bigint",
+          "isNotNull": true
+        },
+        "quantity": {
+          "name": "quantity",
+          "type": "integer",
+          "isNotNull": true
+        },
+        "unit_price": {
+          "name": "unit_price",
+          "type": "decimal",
+          "size": 10,
+          "scale": 2,
+          "isNotNull": true
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamptz",
+          "isNotNull": true,
+          "default": "now()"
+        }
+      },
+      "constraints": [
+        {
+          "name": "fk_order_items_order",
+          "constraintType": "foreign key",
+          "columns": ["order_id"],
+          "references": {
+            "table": "orders",
+            "column": "id",
+            "onDelete": "cascade"
+          }
+        },
+        {
+          "name": "chk_quantity_positive",
+          "constraintType": "check",
+          "expression": "quantity > 0"
+        },
+        {
+          "name": "chk_unit_price_positive",
+          "constraintType": "check",
+          "expression": "unit_price > 0"
+        }
+      ]
+    }
+  },
+  "enums": {
+    "order_status": ["pending", "processing", "confirmed", "shipped", "delivered", "cancelled", "refunded"]
+  }
+}

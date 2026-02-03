@@ -1,0 +1,19 @@
+{
+  "version": 1,
+  "datasources": {
+    "primary": {
+      "url": "postgresql://user:pass@localhost:5432/mydb",
+      "schemas": [
+        "public"
+      ]
+    }
+  },
+  "schema": {
+    "path": "schema/schema.json"
+  },
+  "migrations": {
+    "path": "migrations",
+    "auto_create": true
+  },
+  "generator": null
+}

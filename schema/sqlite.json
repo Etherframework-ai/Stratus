@@ -1,0 +1,209 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://stratus.dev/schema/sqlite.json",
+  "title": "Stratus SQLite Schema Definition",
+  "description": "JSON schema definition for SQLite database schema",
+  "type": "object",
+  "required": ["version", "tables"],
+  "properties": {
+    "version": {
+      "type": "string",
+      "description": "Schema version identifier",
+      "examples": ["1"]
+    },
+    "dialect": {
+      "type": "string",
+      "const": "sqlite",
+      "description": "Database dialect (must be 'sqlite')"
+    },
+    "tables": {
+      "type": "object",
+      "description": "Database tables definition",
+      "additionalProperties": {
+        "$ref": "#/$defs/table"
+      }
+    },
+    "indexes": {
+      "type": "object",
+      "description": "Table-less indexes (SQLite specific)",
+      "additionalProperties": {
+        "$ref": "#/$defs/index"
+      }
+    }
+  },
+  "$defs": {
+    "table": {
+      "type": "object",
+      "required": ["columns"],
+      "properties": {
+        "columns": {
+          "type": "object",
+          "description": "Table columns",
+          "additionalProperties": { "$ref": "#/$defs/column" }
+        },
+        "constraints": {
+          "type": "array",
+          "description": "Table-level constraints",
+          "items": { "$ref": "#/$defs/tableConstraint" }
+        },
+        "withoutRowid": {
+          "type": "boolean",
+          "description": "WITHOUT ROWID optimization (SQLite 3.8.2+)",
+          "default": false
+        },
+        "strict": {
+          "type": "boolean",
+          "description": "STRICT tables (SQLite 3.37.0+)",
+          "default": false
+        }
+      }
+    },
+    "column": {
+      "type": "object",
+      "required": ["name", "type"],
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "Column name"
+        },
+        "type": {
+          "type": "string",
+          "description": "SQLite data type (affinity)",
+          "enum": [
+            "integer", "int", "tinyint", "smallint", "mediumint", "bigint",
+            "real", "double", "float",
+            "text", "varchar", "clob", "string",
+            "blob", "none",
+            "numeric", "decimal", "boolean", "date", "datetime"
+          ]
+        },
+        "isPrimaryKey": {
+          "type": "boolean",
+          "description": "Primary key column",
+          "default": false
+        },
+        "autoIncrement": {
+          "type": "boolean",
+          "description": "AUTOINCREMENT flag (only for INTEGER PRIMARY KEY)",
+          "default": false
+        },
+        "isNotNull": {
+          "type": "boolean",
+          "description": "NOT NULL constraint",
+          "default": false
+        },
+        "isUnique": {
+          "type": "boolean",
+          "description": "UNIQUE constraint",
+          "default": false
+        },
+        "default": {
+          "type": "string",
+          "description": "Default value expression",
+          "examples": ["CURRENT_TIMESTAMP", "CURRENT_DATE", "CURRENT_TIME", "NULL", "0", "'default'"]
+        },
+        "collate": {
+          "type": "string",
+          "description": "Collation sequence",
+          "examples": ["BINARY", "NOCASE", "RTRIM", "UTF8", "UTF16CI"]
+        },
+        "generatedAs": {
+          "type": "object",
+          "description": "Generated column (SQLite 3.31.0+)",
+          "properties": {
+            "expression": { "type": "string", "description": "Generation expression" },
+            "stored": { "type": "boolean", "description": "STORED vs VIRTUAL" }
+          }
+        },
+        "comment": {
+          "type": "string",
+          "description": "Column comment (stored in sqlite_schema)"
+        },
+        "references": {
+          "type": "object",
+          "description": "Foreign key reference",
+          "required": ["table", "column"],
+          "properties": {
+            "table": { "type": "string" },
+            "column": { "type": "string" },
+            "onDelete": {
+              "type": "string",
+              "enum": ["cascade", "setNull", "setDefault", "restrict", "noAction"]
+            },
+            "onUpdate": {
+              "type": "string",
+              "enum": ["cascade", "setNull", "setDefault", "restrict", "noAction"]
+            },
+            "deferrable": { "type": "boolean" },
+            "initiallyDeferred": { "type": "boolean" }
+          }
+        }
+      }
+    },
+    "index": {
+      "type": "object",
+      "required": ["name", "columns"],
+      "properties": {
+        "name": { "type": "string", "description": "Index name" },
+        "table": { "type": "string", "description": "Table name (for standalone indexes)" },
+        "columns": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["name"],
+            "properties": {
+              "name": { "type": "string" },
+              "collate": { "type": "string" },
+              "order": { "type": "string", "enum": ["ASC", "DESC"] }
+            }
+          },
+          "minItems": 1
+        },
+        "unique": { "type": "boolean", "default": false },
+        "ifNotExists": { "type": "boolean", "default": "false" },
+        "where": {
+          "type": "string",
+          "description": "Partial index WHERE clause (SQLite 3.8.0+)"
+        }
+      }
+    },
+    "tableConstraint": {
+      "type": "object",
+      "required": ["constraintType"],
+      "properties": {
+        "name": { "type": "string", "description": "Constraint name" },
+        "constraintType": {
+          "type": "string",
+          "enum": ["primary key", "unique", "check", "foreign key"]
+        },
+        "columns": {
+          "type": "array",
+          "items": { "type": "string" },
+          "minItems": 1
+        },
+        "expression": {
+          "type": "string",
+          "description": "CHECK constraint expression"
+        },
+        "references": {
+          "type": "object",
+          "required": ["table"],
+          "properties": {
+            "table": { "type": "string" },
+            "columns": { "type": "array", "items": { "type": "string" } },
+            "onDelete": {
+              "type": "string",
+              "enum": ["cascade", "setNull", "setDefault", "restrict", "noAction"]
+            },
+            "onUpdate": {
+              "type": "string",
+              "enum": ["cascade", "setNull", "setDefault", "restrict", "noAction"]
+            },
+            "deferrable": { "type": "boolean" },
+            "initiallyDeferred": { "type": "boolean" }
+          }
+        }
+      }
+    }
+  }
+}

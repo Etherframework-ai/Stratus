@@ -1,0 +1,283 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://stratus.dev/schema/mysql.json",
+  "title": "Stratus MySQL Schema Definition",
+  "description": "JSON schema definition for MySQL/MariaDB database schema",
+  "type": "object",
+  "required": ["version", "tables"],
+  "properties": {
+    "version": {
+      "type": "string",
+      "description": "Schema version identifier",
+      "examples": ["1"]
+    },
+    "dialect": {
+      "type": "string",
+      "const": "mysql",
+      "description": "Database dialect (must be 'mysql')"
+    },
+    "tables": {
+      "type": "object",
+      "description": "Database tables definition",
+      "additionalProperties": {
+        "$ref": "#/$defs/table"
+      }
+    },
+    "enums": {
+      "type": "object",
+      "description": "Custom enum definitions",
+      "additionalProperties": {
+        "type": "array",
+        "items": { "type": "string" },
+        "minItems": 1
+      }
+    }
+  },
+  "$defs": {
+    "table": {
+      "type": "object",
+      "required": ["columns"],
+      "properties": {
+        "columns": {
+          "type": "object",
+          "description": "Table columns",
+          "additionalProperties": { "$ref": "#/$defs/column" }
+        },
+        "indexes": {
+          "type": "array",
+          "description": "Table indexes",
+          "items": { "$ref": "#/$defs/index" }
+        },
+        "constraints": {
+          "type": "array",
+          "description": "Table-level constraints",
+          "items": { "$ref": "#/$defs/tableConstraint" }
+        },
+        "options": {
+          "$ref": "#/$defs/tableOptions",
+          "description": "MySQL table options"
+        },
+        "engine": {
+          "type": "string",
+          "description": "Storage engine",
+          "enum": ["InnoDB", "MyISAM", "Memory", "CSV", "Archive", "NDB"],
+          "default": "InnoDB"
+        },
+        "charset": {
+          "type": "string",
+          "description": "Default character set",
+          "examples": ["utf8mb4", "latin1", "utf8"]
+        },
+        "collate": {
+          "type": "string",
+          "description": "Default collation",
+          "examples": ["utf8mb4_unicode_ci", "utf8mb4_general_ci"]
+        }
+      }
+    },
+    "column": {
+      "type": "object",
+      "required": ["name", "type"],
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "Column name"
+        },
+        "type": {
+          "type": "string",
+          "description": "MySQL data type",
+          "enum": [
+            "tinyint", "smallint", "mediumint", "int", "integer", "bigint",
+            "tinyint unsigned", "smallint unsigned", "mediumint unsigned",
+            "int unsigned", "integer unsigned", "bigint unsigned",
+            "float", "double", "double precision", "real", "decimal", "dec", "numeric", "fixed",
+            "bool", "boolean",
+            "date", "datetime", "timestamp", "time", "year",
+            "char", "varchar", "text", "tinytext", "mediumtext", "longtext",
+            "binary", "varbinary", "blob", "tinyblob", "mediumblob", "longblob",
+            "enum", "set",
+            "json",
+            "geometry", "point", "linestring", "polygon", "multipoint",
+            "multilinestring", "multipolygon", "geometrycollection",
+            "bit",
+            "serial"
+          ]
+        },
+        "size": {
+          "type": "integer",
+          "description": "Size/length for char, varchar, int, etc."
+        },
+        "unsigned": {
+          "type": "boolean",
+          "description": "Unsigned integer type",
+          "default": false
+        },
+        "zerofill": {
+          "type": "boolean",
+          "description": "Zero-fill the number",
+          "default": false
+        },
+        "autoIncrement": {
+          "type": "boolean",
+          "description": "AUTO_INCREMENT flag",
+          "default": false
+        },
+        "isPrimaryKey": {
+          "type": "boolean",
+          "description": "Primary key column",
+          "default": false
+        },
+        "isNotNull": {
+          "type": "boolean",
+          "description": "NOT NULL constraint",
+          "default": false
+        },
+        "isUnique": {
+          "type": "boolean",
+          "description": "UNIQUE constraint",
+          "default": false
+        },
+        "default": {
+          "type": "string",
+          "description": "Default value expression",
+          "examples": ["CURRENT_TIMESTAMP", "NULL", "0", "'default'"]
+        },
+        "onUpdate": {
+          "type": "string",
+          "description": "ON UPDATE clause for timestamp/datetime",
+          "examples": ["CURRENT_TIMESTAMP"]
+        },
+        "collation": {
+          "type": "string",
+          "description": "Column collation",
+          "examples": ["utf8mb4_unicode_ci", "utf8mb4_general_ci"]
+        },
+        "comment": {
+          "type": "string",
+          "description": "Column comment"
+        },
+        "after": {
+          "type": "string",
+          "description": "Column position (after this column)"
+        },
+        "references": {
+          "type": "object",
+          "description": "Foreign key reference",
+          "required": ["table", "column"],
+          "properties": {
+            "table": { "type": "string" },
+            "column": { "type": "string" },
+            "onDelete": {
+              "type": "string",
+              "enum": ["cascade", "setNull", "setDefault", "restrict", "noAction"]
+            },
+            "onUpdate": {
+              "type": "string",
+              "enum": ["cascade", "setNull", "setDefault", "restrict", "noAction"]
+            }
+          }
+        }
+      }
+    },
+    "index": {
+      "type": "object",
+      "required": ["name", "columns"],
+      "properties": {
+        "name": { "type": "string", "description": "Index name" },
+        "columns": {
+          "type": "array",
+          "items": { "type": "string" },
+          "minItems": 1
+        },
+        "indexType": {
+          "type": "string",
+          "description": "Index type",
+          "enum": ["btree", "hash", "rtree", "fulltext", "spatial"]
+        },
+        "unique": { "type": "boolean", "default": false },
+        "fulltext": { "type": "boolean", "default": false },
+        "spatial": { "type": "boolean", "default": false },
+        "using": {
+          "type": "string",
+          "description": "Index algorithm",
+          "enum": ["btree", "hash"]
+        },
+        "keyBlockSize": { "type": "integer", "description": "Key block size" },
+        "withParser": {
+          "type": "string",
+          "description": "Fulltext parser plugin name",
+          "examples": ["ngram"]
+        },
+        "comment": { "type": "string", "description": "Index comment" }
+      }
+    },
+    "tableConstraint": {
+      "type": "object",
+      "required": ["constraintType"],
+      "properties": {
+        "name": { "type": "string", "description": "Constraint name" },
+        "constraintType": {
+          "type": "string",
+          "enum": ["primary key", "unique", "check", "foreign key"]
+        },
+        "columns": {
+          "type": "array",
+          "items": { "type": "string" },
+          "minItems": 1
+        },
+        "expression": {
+          "type": "string",
+          "description": "CHECK constraint expression (MySQL 8.0+)"
+        },
+        "references": {
+          "type": "object",
+          "required": ["table"],
+          "properties": {
+            "table": { "type": "string" },
+            "columns": { "type": "array", "items": { "type": "string" } },
+            "onDelete": {
+              "type": "string",
+              "enum": ["cascade", "setNull", "setDefault", "restrict", "noAction"]
+            },
+            "onUpdate": {
+              "type": "string",
+              "enum": ["cascade", "setNull", "setDefault", "restrict", "noAction"]
+            }
+          }
+        }
+      }
+    },
+    "tableOptions": {
+      "type": "object",
+      "description": "MySQL table-level options",
+      "properties": {
+        "engine": {
+          "type": "string",
+          "enum": ["InnoDB", "MyISAM", "Memory", "CSV", "Archive", "NDB"]
+        },
+        "charset": {
+          "type": "string",
+          "examples": ["utf8mb4", "latin1", "utf8"]
+        },
+        "collate": {
+          "type": "string",
+          "examples": ["utf8mb4_unicode_ci", "utf8mb4_general_ci"]
+        },
+        "autoIncrement": { "type": "integer", "description": "Initial AUTO_INCREMENT value" },
+        "keyBlockSize": { "type": "integer" },
+        "rowFormat": {
+          "type": "string",
+          "enum": ["dynamic", "fixed", "compressed", "redundant", "compact"]
+        },
+        "statsAutoRecalc": {
+          "type": "string",
+          "enum": ["default", "on", "off"]
+        },
+        "statsPersistent": {
+          "type": "string",
+          "enum": ["default", "on", "off"]
+        }
+      }
+    }
+  }
+}
